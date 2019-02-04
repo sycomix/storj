@@ -4,7 +4,7 @@
 package main
 
 import (
-	"crypto/ecdsa"
+	"crypto"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -48,8 +48,8 @@ func cmdKeyGenerate(cmd *cobra.Command, args []string) (err error) {
 	}
 	counter := new(uint32)
 	return identity.GenerateKeys(ctx, uint16(keyCfg.MinDifficulty), keyCfg.Concurrency,
-		func(k *ecdsa.PrivateKey, id storj.NodeID) (done bool, err error) {
-			data, err := pkcrypto.PrivateKeyToPKCS8(k)
+		func(k crypto.PrivateKey, id storj.NodeID) (done bool, err error) {
+			data, err := pkcrypto.PrivateKeyToPEM(k)
 			if err != nil {
 				return false, err
 			}

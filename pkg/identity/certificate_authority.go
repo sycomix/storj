@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"crypto"
-	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/x509"
 	"fmt"
@@ -92,7 +91,7 @@ func NewCA(ctx context.Context, opts NewCAOptions) (_ *FullCertificateAuthority,
 		i         = new(uint32)
 
 		mu          sync.Mutex
-		selectedKey *ecdsa.PrivateKey
+		selectedKey crypto.PrivateKey
 		selectedID  storj.NodeID
 	)
 
@@ -114,7 +113,7 @@ func NewCA(ctx context.Context, opts NewCAOptions) (_ *FullCertificateAuthority,
 		}
 	}
 	err = GenerateKeys(ctx, minimumLoggableDifficulty, int(opts.Concurrency),
-		func(k *ecdsa.PrivateKey, id storj.NodeID) (done bool, err error) {
+		func(k crypto.PrivateKey, id storj.NodeID) (done bool, err error) {
 			if opts.Logger != nil {
 				if atomic.AddUint32(i, 1)%100 == 0 {
 					updateStatus()
