@@ -156,10 +156,7 @@ func NewRevocationDBRedis(address string) (*RevocationDB, error) {
 func NewRevocationExt(key crypto.PrivateKey, revokedCert *x509.Certificate) (pkix.Extension, error) {
 	nowUnix := time.Now().Unix()
 
-	hash, err := pkcrypto.SHA256Hash(revokedCert.Raw)
-	if err != nil {
-		return pkix.Extension{}, err
-	}
+	hash := pkcrypto.SHA256Hash(revokedCert.Raw)
 	rev := Revocation{
 		Timestamp: nowUnix,
 		CertHash:  make([]byte, len(hash)),
@@ -261,11 +258,7 @@ func (e ExtensionHandlers) VerifyFunc() PeerCertVerificationFunc {
 // Get attempts to retrieve the most recent revocation for the given cert chain
 // (the  key used in the underlying database is the hash of the CA cert bytes).
 func (r RevocationDB) Get(chain []*x509.Certificate) (*Revocation, error) {
-	hash, err := pkcrypto.SHA256Hash(chain[CAIndex].Raw)
-	if err != nil {
-		return nil, ErrRevocation.Wrap(err)
-	}
-
+	hash := pkcrypto.SHA256Hash(chain[CAIndex].Raw)
 	revBytes, err := r.DB.Get(hash)
 	if err != nil && !storage.ErrKeyNotFound.Has(err) {
 		return nil, ErrRevocationDB.Wrap(err)
@@ -305,10 +298,7 @@ func (r RevocationDB) Put(chain []*x509.Certificate, revExt pkix.Extension) erro
 		return ErrRevocationTimestamp
 	}
 
-	hash, err := pkcrypto.SHA256Hash(ca.Raw)
-	if err != nil {
-		return err
-	}
+	hash := pkcrypto.SHA256Hash(ca.Raw)
 	if err := r.DB.Put(hash, revExt.Value); err != nil {
 		return err
 	}
@@ -327,11 +317,7 @@ func (r Revocation) Verify(signingCert *x509.Certificate) error {
 		return pkcrypto.ErrUnsupportedKey.New("%T", signingCert.PublicKey)
 	}
 
-	data, err := r.TBSBytes()
-	if err != nil {
-		return err
-	}
-
+	data := r.TBSBytes()
 	if err := pkcrypto.VerifySignature(r.Signature, data, pubKey); err != nil {
 		return err
 	}
@@ -340,11 +326,12 @@ func (r Revocation) Verify(signingCert *x509.Certificate) error {
 
 // TBSBytes (ToBeSigned) returns the hash of the revoked certificate hash and
 // the timestamp (i.e. hash(hash(cert bytes) + timestamp)).
-func (r *Revocation) TBSBytes() ([]byte, error) {
-	toHash := new(bytes.Buffer)
+func (r *Revocation) TBSBytes() []byte {
+	var toHash bytes.Buffer
 	_, err := toHash.Write(r.CertHash)
 	if err != nil {
-		return nil, ErrExtension.Wrap(err)
+		// bytes.Buffer#Write() is documented as never returning an error
+		panic(err)
 	}
 
 	// NB: append timestamp to revoked cert bytes
@@ -355,15 +342,12 @@ func (r *Revocation) TBSBytes() ([]byte, error) {
 
 // Sign generates a signature using the passed key and attaches it to the revocation.
 func (r *Revocation) Sign(key crypto.PrivateKey) error {
-	data, err := r.TBSBytes()
+	data := r.TBSBytes()
+	sig, err := pkcrypto.SignHashOf(key, data)
 	if err != nil {
 		return err
 	}
-
-	r.Signature, err = pkcrypto.SignHashOf(key, data)
-	if err != nil {
-		return err
-	}
+	r.Signature = sig
 	return nil
 }
 

@@ -258,8 +258,7 @@ func TestRevocation_Sign(t *testing.T) {
 	assert.NoError(t, err)
 	leafCert, caKey := chain[0], keys[0]
 
-	leafHash, err := pkcrypto.SHA256Hash(leafCert.Raw)
-	assert.NoError(t, err)
+	leafHash := pkcrypto.SHA256Hash(leafCert.Raw)
 
 	rev := peertls.Revocation{
 		Timestamp: time.Now().Unix(),
@@ -276,8 +275,7 @@ func TestRevocation_Verify(t *testing.T) {
 	assert.NoError(t, err)
 	leafCert, caCert, caKey := chain[0], chain[1], keys[0]
 
-	leafHash, err := pkcrypto.SHA256Hash(leafCert.Raw)
-	assert.NoError(t, err)
+	leafHash := pkcrypto.SHA256Hash(leafCert.Raw)
 
 	rev := peertls.Revocation{
 		Timestamp: time.Now().Unix(),
@@ -297,8 +295,7 @@ func TestRevocation_Marshal(t *testing.T) {
 	assert.NoError(t, err)
 	leafCert, caKey := chain[0], keys[0]
 
-	leafHash, err := pkcrypto.SHA256Hash(leafCert.Raw)
-	assert.NoError(t, err)
+	leafHash := pkcrypto.SHA256Hash(leafCert.Raw)
 
 	rev := peertls.Revocation{
 		Timestamp: time.Now().Unix(),
@@ -325,8 +322,7 @@ func TestRevocation_Unmarshal(t *testing.T) {
 	assert.NoError(t, err)
 	leafCert, caKey := chain[0], keys[0]
 
-	leafHash, err := pkcrypto.SHA256Hash(leafCert.Raw)
-	assert.NoError(t, err)
+	leafHash := pkcrypto.SHA256Hash(leafCert.Raw)
 
 	rev := peertls.Revocation{
 		Timestamp: time.Now().Unix(),
@@ -390,10 +386,7 @@ func TestRevocationDB_Get(t *testing.T) {
 		assert.Nil(t, rev)
 	})
 
-	caHash, err := pkcrypto.SHA256Hash(chain[1].Raw)
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
+	caHash := pkcrypto.SHA256Hash(chain[1].Raw)
 
 	err = revDB.DB.Put(caHash, ext.Value)
 	if !assert.NoError(t, err) {
@@ -484,10 +477,7 @@ func TestRevocationDB_Put(t *testing.T) {
 					t.FailNow()
 				}
 				func(t2 *testing.T, ext pkix.Extension) {
-					caHash, err := pkcrypto.SHA256Hash(chain[1].Raw)
-					if !assert.NoError(t2, err) {
-						t2.FailNow()
-					}
+					caHash := pkcrypto.SHA256Hash(chain[1].Raw)
 
 					revBytes, err := revDB.DB.Get(caHash)
 					if !assert.NoError(t2, err) {
