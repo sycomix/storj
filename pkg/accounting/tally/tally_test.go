@@ -46,7 +46,7 @@ func TestQueryWithBw(t *testing.T) {
 				require.Equal(t, int64(1000), total)
 			}
 		}
-		err = tally.SaveBWRaw(ctx, tallyEnd, bwTotals)
+		err = tally.SaveBWRaw(ctx, tallyEnd, time.Now().UTC(), bwTotals)
 		require.NoError(t, err)
 	})
 }
