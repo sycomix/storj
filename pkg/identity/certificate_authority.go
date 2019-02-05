@@ -10,7 +10,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -239,10 +238,9 @@ func (fc FullCAConfig) Load() (*FullCertificateAuthority, error) {
 	if err != nil {
 		return nil, peertls.ErrNotExist.Wrap(err)
 	}
-	kp, _ := pem.Decode(kb)
-	k, err := x509.ParseECPrivateKey(kp.Bytes)
+	k, err := pkcrypto.PrivateKeyFromPEM(kb)
 	if err != nil {
-		return nil, errs.New("unable to parse EC private key: %v", err)
+		return nil, err
 	}
 
 	return &FullCertificateAuthority{
@@ -282,7 +280,7 @@ func (fc FullCAConfig) Save(ca *FullCertificateAuthority) error {
 	}
 
 	if fc.KeyPath != "" {
-		if err := pkcrypto.WriteKey(&keyData, ca.Key); err != nil {
+		if err := pkcrypto.WritePrivateKeyPEM(&keyData, ca.Key); err != nil {
 			writeErrs.Add(err)
 			return writeErrs.Finish()
 		}
@@ -309,7 +307,7 @@ func (pc PeerCAConfig) Load() (*PeerCertificateAuthority, error) {
 		return nil, peertls.ErrNotExist.Wrap(err)
 	}
 
-	chain, err := DecodeAndParseChainPEM(chainPEM)
+	chain, err := pkcrypto.CertsFromPEM(chainPEM)
 	if err != nil {
 		return nil, errs.New("failed to load identity %#v: %v",
 			pc.CertPath, err)
@@ -379,7 +377,7 @@ func (ca *FullCertificateAuthority) Sign(cert *x509.Certificate) (*x509.Certific
 		return nil, errs.Wrap(err)
 	}
 
-	signedCert, err := x509.ParseCertificate(signedCertBytes)
+	signedCert, err := pkcrypto.CertFromDER(signedCertBytes)
 	if err != nil {
 		return nil, errs.Wrap(err)
 	}
