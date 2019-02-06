@@ -51,7 +51,7 @@ func GeneratePayerBandwidthAllocation(upldb uplinkdb.DB, action pb.BandwidthActi
 	_, err = upldb.GetPublicKey(ctx, upID.ID.Bytes())
 	if err != nil {
 		// no previous entry exists
-		err = upldb.CreateAgreement(context.Background(), uplinkdb.Agreement{ID: upID.ID.Bytes(), PublicKey: pubbytes})
+		err = upldb.SavePublicKey(context.Background(), uplinkdb.Agreement{ID: upID.ID.Bytes(), PublicKey: pubbytes})
 		if err != nil {
 			return nil, err
 		}
